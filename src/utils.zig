@@ -1,5 +1,6 @@
 const std = @import("std");
 const types = @import("types.zig");
+const testing = @import("std").testing;
 
 const ErrorSet = error{InvalidInput};
 
@@ -32,9 +33,9 @@ fn Point(comptime T: type) type {
     };
 }
 
-pub fn Grid(comptime T: type) type {
+pub fn Grid(comptime T: type, U: type) type {
     return struct {
-        data: []T,
+        data: []const T,
         width: usize,
         height: usize,
         allocator: std.mem.Allocator,
@@ -49,8 +50,8 @@ pub fn Grid(comptime T: type) type {
 
         pub fn fromLines(
             allocator: std.mem.Allocator,
-            lines: []const types.string,
-            comptime parseCell: fn (types.string) Error!T,
+            lines: []const []const u8,
+            comptime parseCell: fn (T) ErrorSet!U,
         ) !Self {
             if (lines.len == 0) return Error.InvalidDimensions;
             const width = lines[0].len;
@@ -81,36 +82,76 @@ pub fn Grid(comptime T: type) type {
         }
 
         pub fn at(self: Self, x: usize, y: usize) ?Point(T) {
-            if (x >= self.width or y >= self.height) return null;
-            return 1;
-            // return &Point(T){ .x = x, .y = y, .val = &self.data[y * self.width + x] };
-        }
-
-        pub fn get(self: Self, x: usize, y: usize) T {
-            return self.data[y * self.width + x];
+            if (x >= self.width or y >= self.height or x < 0 or y < 0) return null;
+            return Point(T){ .x = @intCast(x), .y = @intCast(y), .val = self.data[y * self.width + x] };
         }
 
         /// Helper for "get neighbors"
-        pub fn neighbors(self: Self, x: isize, y: isize) !struct { north: ?Point, south: ?Point, east: ?Point, west: ?Point } {
-            const north = at(self, x, y + 1);
-            const east = at(self, x + 1, y);
+        pub fn neighbors(self: Self, x: usize, y: usize) struct { north: ?Point(T), south: ?Point(T), east: ?Point(T), west: ?Point(T) } {
+            const north: ?Point(T) = at(self, x, y - 1);
+            const east: ?Point(T) = at(self, x + 1, y);
+            const south: ?Point(T) = at(self, x, y + 1);
+            const west: ?Point(T) = at(self, x - 1, y);
 
-            var south: ?Point = null;
-            if (y > 0) {
-                south = at(self, x, y - 1);
-            }
-
-            var west: ?Point = null;
-            if (west > 0) {
-                west = at(self, x - 1, y);
-            }
-
-            return struct {
-                north,
-                south,
-                east,
-                west,
+            return .{
+                .north = north,
+                .south = south,
+                .east = east,
+                .west = west,
             };
         }
     };
+}
+
+fn parse(input: []const u8) ErrorSet![]const u8 {
+    return input;
+}
+
+test "Grid.at" {
+    const allocator = std.testing.allocator;
+    const lines = [_][]const u8{
+        "123",
+        "456",
+        "789",
+    };
+
+    const grid = try Grid([]const u8, []const u8).fromLines(
+        allocator,
+        &lines,
+        parse,
+    );
+    defer grid.deinit();
+
+    const expected: []const u8 = "4";
+    const actual: []const u8 = grid.at(0, 1).?.val;
+    try testing.expectEqualStrings(expected, actual);
+}
+
+test "Grid.neighbors" {
+    const allocator = std.testing.allocator;
+    const lines = [_][]const u8{
+        "123",
+        "456",
+        "789",
+    };
+    const grid = try Grid([]const u8, []const u8).fromLines(allocator, &lines, parse);
+    defer grid.deinit();
+
+    const expected = struct {
+        north: ?Point([]const u8),
+        south: ?Point([]const u8),
+        east: ?Point([]const u8),
+        west: ?Point([]const u8),
+    }{
+        .north = Point([]const u8){ .x = 1, .y = 0, .val = "2" },
+        .south = Point([]const u8){ .x = 1, .y = 2, .val = "8" },
+        .east = Point([]const u8){ .x = 2, .y = 1, .val = "6" },
+        .west = Point([]const u8){ .x = 0, .y = 1, .val = "4" },
+    };
+    const actual = grid.neighbors(1, 1);
+
+    try testing.expectEqualDeep(expected.north, actual.north);
+    try testing.expectEqualDeep(expected.south, actual.south);
+    try testing.expectEqualDeep(expected.east, actual.east);
+    try testing.expectEqualDeep(expected.west, actual.west);
 }
