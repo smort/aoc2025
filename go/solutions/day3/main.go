@@ -76,6 +76,5 @@ func maxJoltageArbitrary(str string, numDigits int) int {
 		result += val * int(math.Pow(10, float64(numDigits-i-1)))
 	}
 
-	println("Result:", result)
 	return result
 }
