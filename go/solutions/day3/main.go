@@ -54,7 +54,7 @@ func maxJoltage(str string) int {
 
 func maxJoltageArbitrary(str string, numDigits int) int {
 	numToRemove := len(str) - numDigits // how many digits to remove
-	stack := &Stack[int]{}
+	stack := &util.Stack[int]{}
 
 	for _, s := range str {
 		curr := util.MustConvAtoi(string(s))
@@ -72,41 +72,10 @@ func maxJoltageArbitrary(str string, numDigits int) int {
 
 	result := 0
 	for i := range numDigits {
-		val := stack.items[i]
-		// result += strconv.Itoa(stack.items[i])
+		val := stack.Items[i]
 		result += val * int(math.Pow(10, float64(numDigits-i-1)))
 	}
 
 	println("Result:", result)
 	return result
-}
-
-type Stack[T comparable] struct {
-	items []T
-}
-
-func (s *Stack[T]) Push(item T) {
-	s.items = append(s.items, item)
-}
-
-func (s *Stack[T]) Pop() (T, bool) {
-	if len(s.items) == 0 {
-		var zero T
-		return zero, false
-	}
-	item := s.items[len(s.items)-1]
-	s.items = s.items[:len(s.items)-1]
-	return item, true
-}
-
-func (s *Stack[T]) Peek() (T, bool) {
-	if len(s.items) == 0 {
-		var zero T
-		return zero, false
-	}
-	return s.items[len(s.items)-1], true
-}
-
-func (s *Stack[T]) IsEmpty() bool {
-	return len(s.items) == 0
 }
