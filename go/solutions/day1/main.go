@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	// part1("input.txt")
+	part1("input.txt")
 	part2("input.txt")
 }
 
