@@ -43,8 +43,15 @@ type GridInterface interface {
 	GetCost(from, to Coordinate) int
 	// GetNeighbors returns valid neighboring coordinates
 	GetNeighbors(pos Coordinate) []Coordinate
+	// FindCoordinates returns all coordinates containing the target rune
+	FindCoordinates(target rune) []Coordinate
+	// At returns the rune at the given coordinate
+	At(pos Coordinate) *rune
+	// Set a cell at the given coordinate
+	SetCell(pos Coordinate, cell rune)
 }
 
+// TODO: implement a constructor func that takes a slice of strings. would save time
 type DenseGrid struct {
 	Width, Height int
 	Grid          [][]rune
@@ -121,6 +128,32 @@ func (g *DenseGrid) GetNeighbors(pos Coordinate) []Coordinate {
 	return neighbors
 }
 
+func (g *DenseGrid) FindCoordinates(target rune) []Coordinate {
+	coords := make([]Coordinate, 0)
+	for y := 0; y < g.Height; y++ {
+		for x := 0; x < g.Width; x++ {
+			if g.Grid[y][x] == target {
+				coords = append(coords, Coordinate{X: x, Y: y})
+			}
+		}
+	}
+	return coords
+}
+
+func (g *DenseGrid) At(pos Coordinate) *rune {
+	if pos.X < 0 || pos.Y < 0 || pos.X >= g.Width || pos.Y >= g.Height {
+		return nil
+	}
+	return &g.Grid[pos.Y][pos.X]
+}
+
+func (g *DenseGrid) SetCell(pos Coordinate, cell rune) {
+	if pos.X >= 0 && pos.Y >= 0 && pos.X < g.Width && pos.Y < g.Height {
+		g.Grid[pos.Y][pos.X] = cell
+	}
+}
+
+// TODO: implement a constructor func that takes a slice of strings
 type SparseGrid struct {
 	Cells      map[Coordinate]rune
 	Directions []Coordinate
@@ -217,6 +250,23 @@ func (g *SparseGrid) GetNeighbors(pos Coordinate) []Coordinate {
 		}
 	}
 	return neighbors
+}
+
+func (g *SparseGrid) FindCoordinates(target rune) []Coordinate {
+	coords := make([]Coordinate, 0)
+	for coord, cell := range g.Cells {
+		if cell == target {
+			coords = append(coords, coord)
+		}
+	}
+	return coords
+}
+
+func (g *SparseGrid) At(pos Coordinate) *rune {
+	if cell, exists := g.Cells[pos]; exists {
+		return &cell
+	}
+	return nil
 }
 
 // PathResult represents the result of a pathfinding operation
