@@ -13,3 +13,11 @@ func MustConvAtoi(s string) int {
 
 	return i
 }
+
+func MustConvAtoi2(s []string) (int, int) {
+	if len(s) != 2 {
+		panic(fmt.Errorf("expected slice of length 2, got %d", len(s)))
+	}
+
+	return MustConvAtoi(s[0]), MustConvAtoi(s[1])
+}
