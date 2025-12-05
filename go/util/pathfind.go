@@ -51,7 +51,7 @@ type GridInterface interface {
 	SetCell(pos Coordinate, cell rune)
 }
 
-// TODO: implement a constructor func that takes a slice of strings. would save time
+// TODO: implement a constructor func that takes a slice of strings. would save time. also use functional options pattern for cost/valid funcs
 type DenseGrid struct {
 	Width, Height int
 	Grid          [][]rune
