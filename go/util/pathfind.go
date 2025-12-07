@@ -51,7 +51,7 @@ type GridInterface interface {
 	SetCell(pos Coordinate, cell rune)
 }
 
-// TODO: implement a constructor func that takes a slice of strings. would save time. also use functional options pattern for cost/valid funcs
+// TODO: use functional options pattern for cost/valid funcs
 type DenseGrid struct {
 	Width, Height int
 	Grid          [][]rune
@@ -87,6 +87,24 @@ func NewDenseGridWithOptions(width, height int, grid [][]rune, costFunc CostFunc
 		Directions: Directions4,
 		costFunc:   costFunc,
 		validFunc:  validFunc,
+	}
+}
+
+func NewDenseGridFromLines(lines []string) *DenseGrid {
+	height := len(lines)
+	if height == 0 {
+		return nil
+	}
+	width := len(lines[0])
+	grid := make([][]rune, height)
+	for y, line := range lines {
+		grid[y] = []rune(line)
+	}
+	return &DenseGrid{
+		Width:      width,
+		Height:     height,
+		Grid:       grid,
+		Directions: Directions4,
 	}
 }
 
@@ -646,7 +664,9 @@ func FindAllShortestPaths(grid GridInterface, start, goal Coordinate) [][]Coordi
 		for _, neighbor := range grid.GetNeighbors(current) {
 			if dist, exists := visited[neighbor]; !exists || dist >= len(path) {
 				visited[neighbor] = len(path)
-				newPath := append(path, neighbor)
+				newPath := make([]Coordinate, len(path)+1)
+				copy(newPath, path)
+				newPath[len(path)] = neighbor
 				queue = append(queue, newPath)
 			}
 		}
