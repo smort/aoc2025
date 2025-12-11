@@ -734,3 +734,29 @@ func TimeCostFunc(baseCostFunc CostFunc, timeModifier func() float64) CostFunc {
 		return int(float64(baseCost) * timeModifier())
 	}
 }
+
+type Graph[N comparable] interface {
+	Neighbors(v N) []N
+}
+
+type AdjList[K comparable] map[K][]K
+
+func (a AdjList[K]) Neighbors(v K) []K {
+	return a[v]
+}
+
+func CountAllPaths[N comparable](g Graph[N], curr, end N, memo map[N]int64) int64 {
+	if curr == end {
+		return 1
+	}
+	if count, ok := memo[curr]; ok {
+		return count
+	}
+
+	var total int64
+	for _, neigh := range g.Neighbors(curr) {
+		total += CountAllPaths(g, neigh, end, memo)
+	}
+	memo[curr] = total
+	return total
+}
